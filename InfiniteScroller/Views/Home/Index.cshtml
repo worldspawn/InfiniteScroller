@@ -1,0 +1,47 @@
+﻿@model dynamic
+
+@{
+    ViewBag.Title = "title";
+}
+
+
+<table id="thetable" data-bind="infinitescroll : scrollermodel, with : scrollermodel">
+    <thead>
+        <tr data-bind="foreach : columns">
+            <th data-bind="html : label, css : { sortable : sortable, currentsort : currentsort }, click : click"></th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach : data">
+        <tr>
+            <td data-bind="html : index"></td>
+            <td>row</td>
+            <td>row</td>
+        </tr>
+    </tbody>
+</table>
+
+<script type="text/javascript">
+    function InfiniteScrollViewModel() {
+        this.filter = $.extend({}, ko.bindingHandlers.infinitescroll.defaultFilter);
+        this.filter.skip = 300;
+        this.filter.take = 300;
+        this.columns = [
+            new ko.bindingHandlers.infinitescroll.Column('Column A', true, 'index', true, this),
+            new ko.bindingHandlers.infinitescroll.Column('Column B'),
+            new ko.bindingHandlers.infinitescroll.Column('Column C')
+        ];
+        this.throttle=600;
+
+        var fakeData = [];
+        for (var i = 0; i < this.filter.skip; i++)
+            fakeData[i] = { index : i};
+
+        this.data = ko.observableArray(fakeData);
+    }
+
+    var viewModel = {
+        scrollermodel : new InfiniteScrollViewModel()
+    };
+
+    ko.applyBindings(viewModel, $('thetable')[0]);
+</script>
