@@ -21,7 +21,7 @@
 </table>
 
 <script type="text/javascript">
-    function InfiniteScrollViewModel() {
+    function InfiniteScrollViewModel(uri) {
         this.filter = $.extend({}, ko.bindingHandlers.infinitescroll.defaultFilter);
         this.filter.skip = 300;
         this.filter.take = 300;
@@ -30,7 +30,9 @@
             new ko.bindingHandlers.infinitescroll.Column('Column B'),
             new ko.bindingHandlers.infinitescroll.Column('Column C')
         ];
-        this.throttle=600;
+
+        this.throttle = 600;
+        this.uri = uri
 
         var fakeData = [];
         for (var i = 0; i < this.filter.skip; i++)
@@ -40,7 +42,7 @@
     }
 
     var viewModel = {
-        scrollermodel : new InfiniteScrollViewModel()
+        scrollermodel: new InfiniteScrollViewModel('@Url.Action("GetData")')
     };
 
     ko.applyBindings(viewModel, $('thetable')[0]);

@@ -26,7 +26,6 @@
             var $element = $(element);
             var manager = new ko.bindingHandlers.infinitescroll.ScrollManager();
             manager.init(options, $element);
-
         },
         Column: function (label, sortable, sortkey, currentsort, options) {
             this.label = label;
@@ -97,13 +96,24 @@
                 this.lastSkip = this.options.filter.skip;
                 if (this.options.filter.skip === 0)
                     this.options.data.removeAll();
-                
-                var skip = this.options.filter.skip; //fake out
-                for (var i = skip; i < skip + this.options.filter.take; i++)
-                    this.options.data.push({ index: i });
 
-                this.options.filter.skip += this.options.filter.take;
+                var payload = JSON.stringify(this.options.filter);
 
+                var xhr = $.ajax(this.options.uri, {
+                    contentType: 'application/json',
+                    data: payload,
+                    dataType: 'json',
+                    type: 'post'
+                });
+
+                xhr.done(function (data) {
+                    var dataset = data.payload;
+
+                    for (var i = 0; i < dataset.length; i++)
+                        this.options.data.push(dataset[i]);
+
+                    this.options.filter.skip += dataset.length;
+                });
             };
         },
         defaultOptions: {
