@@ -1,5 +1,23 @@
 ﻿(function () {
     var sortDirections = ['ascending', 'descending'];
+    ko.bindingHandlers.column = {
+        init: function (element, valueAccessor) {
+            var options = valueAccessor();
+            
+            var $element = $(element);
+            var $columncontainer = $('<div/>');
+            var $label = $('<span/>').html(options.label);
+
+            $columncontainer.append($label);
+            $columncontainer.appendTo($element);
+
+            if (options.sortable) {
+                $('<i/>').addClass('icon-chevron-up').appendTo($columncontainer);
+                $('<i/>').addClass('icon-chevron-down').appendTo($columncontainer);
+            }
+        }
+    }
+
     ko.bindingHandlers.infinitescroll = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
             var options = valueAccessor();
@@ -27,29 +45,50 @@
             var manager = new ko.bindingHandlers.infinitescroll.ScrollManager();
             manager.init(options, $element);
         },
-        Column: function (label, sortable, sortkey, currentsort, options) {
+        Column: function (label, sortable, sortkey, options) {
             this.label = label;
+
+            if (!options)
+                return;
+
+            this.options = options;
             this.sortable = sortable;
             this.sortkey = sortkey;
-            this.currentsort = ko.observable(currentsort == true);
-            this.options = options;
+            this.currentsort = ko.observable(this.options.filter.sortby() === sortkey);            
+            this.sortdirection = ko.observable(this.currentsort() ? this.options.filter.sortdirection() : sortDirections[0]);
+            this.click = null;
 
-            this.click = $.proxy(function () {
-                if (!this.sortable || !this.options)
-                    return;
-                var filter = this.options.filter;
-                filter.skip = 0;
+            this[sortDirections[0]] = ko.computed($.proxy(function () {
+                return this.sortdirection() === sortDirections[0];
+            }, this));
 
-                if (filter.sortby() === this.sortkey) {
-                    if (filter.sortdirection() === sortDirections[0])
-                        filter.sortdirection(sortDirections[1]);
-                    else
+            this[sortDirections[1]] = ko.computed($.proxy(function () {
+                return this.sortdirection() === sortDirections[1];
+            }, this));
+            
+            var filter = this.options.filter;
+
+            if (this.sortable)
+                this.click = $.proxy(function () {
+                    if (!this.sortable || !this.options)
+                        return;                
+                    filter.skip = 0;
+                    //this.sortable(false);
+                    console.log(filter.sortby(), this.sortkey);
+                    if (filter.sortby() === this.sortkey) {
+                        console.log(filter.sortdirection());
+                        if (filter.sortdirection() === sortDirections[0])
+                            filter.sortdirection(sortDirections[1]);
+                        else
+                            filter.sortdirection(sortDirections[0]);
+
+                        this.sortdirection(filter.sortdirection());                        
+                    } else {
+                        filter.sortby(this.sortkey);
                         filter.sortdirection(sortDirections[0]);
-                } else {
-                    filter.sortby(this.sortkey);
-                    filter.sortdirection('ascending');
-                }
-            }, this);
+                        this.sortdirection(filter.sortdirection);
+                    }
+                }, this);
         },
         ScrollManager: function () {
             this.init = function (options, $element) {
@@ -68,6 +107,7 @@
                 this.$element = $element;
             },
             this.onscroll = function () {
+                console.log('scroll');
                 var lastskip = this.lastSkip;
                 var loadeditems = this.options.data().length;
 
@@ -90,7 +130,8 @@
                 var elemTop = $element.offset().top;
                 var elemBottom = elemTop + $element.height();
 
-                return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
+                return (elemTop <= docViewBottom);
+                //return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
             };
             this.loadnext = function () {
                 this.lastSkip = this.options.filter.skip;
@@ -106,19 +147,19 @@
                     type: 'post'
                 });
 
-                xhr.done(function (data) {
+                xhr.done($.proxy(function (data) {
                     var dataset = data.payload;
 
                     for (var i = 0; i < dataset.length; i++)
                         this.options.data.push(dataset[i]);
 
                     this.options.filter.skip += dataset.length;
-                });
+                }, this));
             };
         },
         defaultOptions: {
             throttle: 500,
-            thresholdindex: 15,
+            thresholdindex: 60,
             uri: undefined
         },
         defaultFilter: {

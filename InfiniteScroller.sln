@@ -1,7 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfiniteScroller", "InfiniteScroller\InfiniteScroller.csproj", "{0480C184-B6E5-42AA-BABE-09B96DEE7189}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestData.Profiles", "..\TestData\TestData.Profiles\TestData.Profiles.csproj", "{9784383D-CCC6-416E-8E6C-6E132FD75BEA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +15,10 @@ Global
 		{0480C184-B6E5-42AA-BABE-09B96DEE7189}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0480C184-B6E5-42AA-BABE-09B96DEE7189}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0480C184-B6E5-42AA-BABE-09B96DEE7189}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9784383D-CCC6-416E-8E6C-6E132FD75BEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9784383D-CCC6-416E-8E6C-6E132FD75BEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9784383D-CCC6-416E-8E6C-6E132FD75BEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9784383D-CCC6-416E-8E6C-6E132FD75BEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

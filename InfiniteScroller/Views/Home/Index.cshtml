@@ -1,48 +1,65 @@
-﻿@model dynamic
+﻿@using InfiniteScroller.Extensions;
+@model IEnumerable<InfiniteScroller.Controllers.SampleItem>
 
 @{
     ViewBag.Title = "title";
 }
 
+<style>
+    .sortable span {
+        text-decoration : underline;
+        cursor : pointer;
+    }
 
-<table id="thetable" data-bind="infinitescroll : scrollermodel, with : scrollermodel">
+    .sortable i[class*=icon] {
+        display : none;
+    }    
+
+    .sortable.currentsort.asc .icon-chevron-up {
+        display : inline-block;
+    }
+
+    .sortable.currentsort.desc .icon-chevron-down {
+        display : inline-block;
+    }
+    
+</style>
+
+<table id="thetable" data-bind="infinitescroll : scrollermodel, with : scrollermodel" class="table table-striped">
     <thead>
         <tr data-bind="foreach : columns">
-            <th data-bind="html : label, css : { sortable : sortable, currentsort : currentsort }, click : click"></th>
+            <th data-bind="column : $data, css : { sortable : sortable, currentsort : currentsort(), asc : ascending(), desc : descending() }, click : click"></th>
         </tr>
     </thead>
     <tbody data-bind="foreach : data">
         <tr>
-            <td data-bind="html : index"></td>
-            <td>row</td>
-            <td>row</td>
+            <td data-bind="html : $index"></td>
+            <td data-bind="html : Name"></td>
+            <td data-bind="html : Group"></td>            
         </tr>
     </tbody>
 </table>
 
 <script type="text/javascript">
-    function InfiniteScrollViewModel(uri) {
+    function InfiniteScrollViewModel(uri, payload) {
         this.filter = $.extend({}, ko.bindingHandlers.infinitescroll.defaultFilter);
-        this.filter.skip = 300;
-        this.filter.take = 300;
+        this.filter.skip = payload.length;
+        this.filter.take = payload.length;
+        this.filter.sortby('Name');
         this.columns = [
-            new ko.bindingHandlers.infinitescroll.Column('Column A', true, 'index', true, this),
-            new ko.bindingHandlers.infinitescroll.Column('Column B'),
-            new ko.bindingHandlers.infinitescroll.Column('Column C')
+            new ko.bindingHandlers.infinitescroll.Column('Index', false, null, this),
+            new ko.bindingHandlers.infinitescroll.Column('Column A', true, 'Name', this),
+            new ko.bindingHandlers.infinitescroll.Column('Column B', false, null, this)
         ];
 
         this.throttle = 600;
         this.uri = uri
 
-        var fakeData = [];
-        for (var i = 0; i < this.filter.skip; i++)
-            fakeData[i] = { index : i};
-
-        this.data = ko.observableArray(fakeData);
+        this.data = ko.observableArray(payload);
     }
 
     var viewModel = {
-        scrollermodel: new InfiniteScrollViewModel('@Url.Action("GetData")')
+        scrollermodel: new InfiniteScrollViewModel('@Url.Action("GetData")', @Html.ToJson(Model))
     };
 
     ko.applyBindings(viewModel, $('thetable')[0]);
