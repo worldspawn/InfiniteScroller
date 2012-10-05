@@ -19,7 +19,7 @@ namespace InfiniteScroller.Controllers
             var sampleProfile = new DataProfile<SampleItem>(() => new SampleItem())
             .ForMember(x => x.Name, new RandomStringValueCreator(4, 8))
             .ForMember(x => x.Group, new RandomStringValueCreator(4, 8))
-            .Generate(profile, 2000);
+            .Generate(profile, 2050);
 
             _demoItems = sampleProfile.ToList();
         }

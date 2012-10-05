@@ -73,8 +73,7 @@
                     if (!this.sortable || !this.options)
                         return;                
                     filter.skip = 0;
-                    //this.sortable(false);
-                    console.log(filter.sortby(), this.sortkey);
+
                     if (filter.sortby() === this.sortkey) {
                         console.log(filter.sortdirection());
                         if (filter.sortdirection() === sortDirections[0])
@@ -107,7 +106,6 @@
                 this.$element = $element;
             },
             this.onscroll = function () {
-                console.log('scroll');
                 var lastskip = this.lastSkip;
                 var loadeditems = this.options.data().length;
 
