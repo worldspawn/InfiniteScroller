@@ -1,5 +1,5 @@
 ﻿@using InfiniteScroller.Extensions;
-@model IEnumerable<InfiniteScroller.Controllers.SampleItem>
+@model InfiniteScroller.Models.ScrollerPayload<InfiniteScroller.Controllers.SampleItem>
 
 @{
     ViewBag.Title = "title";
@@ -22,47 +22,83 @@
     .sortable.currentsort.desc .icon-chevron-down {
         display : inline-block;
     }
+
+    #scrollcontainer {
+        height: 400px;
+        position: relative;
+        overflow: visible;
+    }
+
+    .scrollstatus {
+        position: absolute;
+        bottom: -24px;
+        left: 0px;
+
+        color: white;
+        z-index: 1;
+        border-radius: 4px;
+        background-color: gray;
+        width: 100%;
+    }
     
+    .scrollwindow {
+        height: 400px;
+        overflow-y: scroll;
+    }
 </style>
 
 <h1>Infinite Scrollums</h1>
 
-<table id="thetable" data-bind="infinitescroll : scrollermodel, with : scrollermodel" class="table table-striped">
-    <thead>
-        <tr data-bind="foreach : columns">
-            <th data-bind="column : $data, css : { sortable : sortable, currentsort : currentsort(), asc : ascending(), desc : descending() }, click : click"></th>
-        </tr>
-    </thead>
-    <tbody data-bind="foreach : data">
-        <tr>
-            <td data-bind="html : $index"></td>
-            <td data-bind="html : Name"></td>
-            <td data-bind="html : Group"></td>            
-        </tr>
-    </tbody>
-</table>
+<div id="scrollcontainer">
+    <div class="scrollwindow">
+        <table id="thetable" data-bind="infinitescroll : scrollermodel, with : scrollermodel" class="table table-striped">
+            <thead>
+                <tr data-bind="foreach : columns">
+                    <th data-bind="column : $data, css : { sortable : $data.sortable || false, currentsort : $data.currentsort || false, asc : $data.ascending || false, desc : $data.descending || false }, click : $data.click || null"></th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach : data">
+                <tr>
+                    <td><a data-bind="html : $index, attr : { name : 'index_' + $index() }"></a></td>
+                    <td data-bind="html : Name"></td>
+                    <td data-bind="html : Group"></td>            
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="scrollstatus">
+        Total: <span data-bind="html : scrollermodel.filter.total"></span>
+        [
+        <!-- ko foreach : ko.computed(function(){ var x = []; x.length = 4; return x }) -->
+        <span data-bind="html : (1 + $index()) * ($parent.scrollermodel.filter.total() / 5)"></span>
+        <!-- /ko -->
+        ]
+    </div>
+</div>
 
 <script type="text/javascript">
     function InfiniteScrollViewModel(uri, payload) {
         this.filter = $.extend({}, ko.bindingHandlers.infinitescroll.defaultFilter);
-        this.filter.skip = payload.length;
-        this.filter.take = payload.length;
+        this.filter.skip = payload.Data.length;
+        this.filter.take = payload.Data.length;
+        this.filter.total(payload.Total);
         this.filter.sortby('Name');
+        this.container = $('.scrollwindow');
         this.columns = [
-            new ko.bindingHandlers.infinitescroll.Column('Index', false, null, this),
-            new ko.bindingHandlers.infinitescroll.Column('Column A', true, 'Name', this),
-            new ko.bindingHandlers.infinitescroll.Column('Column B', false, null, this)
+            new ko.bindingHandlers.infinitescroll.Column({ label : 'Index', sortable : false }),
+            new ko.bindingHandlers.infinitescroll.Column({ label : 'Column A', sortable : true, sortkey : 'Name', filter : this.filter }),
+            new ko.bindingHandlers.infinitescroll.Column({ label : 'Column B', sortable : false })
         ];
 
         this.throttle = 600;
-        this.uri = uri
-
-        this.data = ko.observableArray(payload);
+        this.uri = uri;
+        console.log(this.filter.total ()/ 5)
+        this.data = ko.observableArray(payload.Data);
     }
 
     var viewModel = {
         scrollermodel: new InfiniteScrollViewModel('@Url.Action("GetData")', @Html.ToJson(Model))
     };
 
-    ko.applyBindings(viewModel, $('thetable')[0]);
+    ko.applyBindings(viewModel, $('scrollcontainer')[0]);
 </script>

@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.UI.WebControls;
+using InfiniteScroller.Models;
 using TestData.Profiles;
 using TestData.Profiles.ValueCreators;
 
@@ -28,7 +29,8 @@ namespace InfiniteScroller.Controllers
 
         public ActionResult Index()
         {
-            return View(_demoItems.Skip(0).Take(100).OrderBy(x=>x.Name));
+            var total = _demoItems.Count;
+            return View(new ScrollerPayload<SampleItem>() { Data = _demoItems.Skip(0).Take(100).OrderBy(x=>x.Name), Total = total });
         }
 
         public ActionResult GetData(QueryFilter filter)
@@ -49,9 +51,14 @@ namespace InfiniteScroller.Controllers
                     items = items.OrderByDescending(orderby);
             }
 
-            return Json(new
+            int? total = null;
+            if (filter.Skip == 0)
+                total = _demoItems.Count;
+
+            return Json(new ScrollerPayload<SampleItem>
             {
-                payload = items
+                Data = items,
+                Total = total
             });
         }
     }

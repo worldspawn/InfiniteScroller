@@ -1,7 +1,7 @@
 ﻿(function () {
     var sortDirections = ['ascending', 'descending'];
     ko.bindingHandlers.column = {
-        init: function (element, valueAccessor) {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var options = valueAccessor();
             
             var $element = $(element);
@@ -45,49 +45,49 @@
             var manager = new ko.bindingHandlers.infinitescroll.ScrollManager();
             manager.init(options, $element);
         },
-        Column: function (label, sortable, sortkey, options) {
-            this.label = label;
+        Column: function (options) {
+            var self = this;
 
-            if (!options)
+            self.label = options.label;
+            self.sortable = false;
+            self.currentsort = ko.observable(null);
+
+            if (!options.sortable || !options.sortkey || !options.filter)
                 return;
-
-            this.options = options;
-            this.sortable = sortable;
-            this.sortkey = sortkey;
-            this.currentsort = ko.observable(this.options.filter.sortby() === sortkey);            
-            this.sortdirection = ko.observable(this.currentsort() ? this.options.filter.sortdirection() : sortDirections[0]);
-            this.click = null;
-
-            this[sortDirections[0]] = ko.computed($.proxy(function () {
-                return this.sortdirection() === sortDirections[0];
-            }, this));
-
-            this[sortDirections[1]] = ko.computed($.proxy(function () {
-                return this.sortdirection() === sortDirections[1];
-            }, this));
             
-            var filter = this.options.filter;
+            self.sortable = options.sortable;
+            self.sortkey = options.sortkey;
+            self.currentsort(options.filter.sortby() === self.sortkey);
+            self.sortdirection = ko.observable(self.currentsort() ? options.filter.sortdirection() : sortDirections[0]);
+            self.click = null;
 
-            if (this.sortable)
-                this.click = $.proxy(function () {
-                    if (!this.sortable || !this.options)
+            self[sortDirections[0]] = ko.computed(function () {
+                return self.sortdirection() === sortDirections[0];
+            });
+
+            self[sortDirections[1]] = ko.computed(function () {
+                return self.sortdirection() === sortDirections[1];
+            });
+            
+            if (self.sortable)
+                self.click = function () {
+                    if (!self.sortable)
                         return;                
-                    filter.skip = 0;
+                    options.filter.setSkip(0);
 
-                    if (filter.sortby() === this.sortkey) {
-                        console.log(filter.sortdirection());
-                        if (filter.sortdirection() === sortDirections[0])
-                            filter.sortdirection(sortDirections[1]);
+                    if (self.currentsort()) {
+                        if (options.filter.sortdirection() === sortDirections[0])
+                            options.filter.sortdirection(sortDirections[1]);
                         else
-                            filter.sortdirection(sortDirections[0]);
+                            options.filter.sortdirection(sortDirections[0]);
 
-                        this.sortdirection(filter.sortdirection());                        
+                        self.sortdirection(options.filter.sortdirection());
                     } else {
-                        filter.sortby(this.sortkey);
-                        filter.sortdirection(sortDirections[0]);
-                        this.sortdirection(filter.sortdirection);
+                        options.filter.sortby(self.sortkey);
+                        options.filter.sortdirection(sortDirections[0]);
+                        self.sortdirection(sortDirections[0]);
                     }
-                }, this);
+                };
         },
         ScrollManager: function () {
             this.init = function (options, $element) {
@@ -96,8 +96,9 @@
                 var subscriber = ko.computed($.proxy(options.filter.toJSON, options.filter));
                 subscriber.extend({ throttle: options.throttle });
                 subscriber.subscribe($.proxy(this.loadnext, this));
+                this.container = options.container || $(window);
 
-                $(window).scroll($.proxy(this.onscroll, this));
+                this.container.scroll($.proxy(this.onscroll, this));
                 $(window).unload($.proxy(function () { //put this here to try and help IE clean up
                     this.options.data.removeAll();
                 }, this));
@@ -120,13 +121,13 @@
                 }
             };
             this.isinview = function ($element) {
-                var $window = $(window);
-
-                var docViewTop = $window.scrollTop();
-                var docViewBottom = docViewTop + $window.height();
+                var $container = this.options.container;
+                
+                var docViewTop = $container.scrollTop();
+                var docViewBottom = docViewTop + $container.height();
 
                 var elemTop = $element.offset().top;
-                var elemBottom = elemTop + $element.height();
+                //var elemBottom = elemTop + $element.height();
 
                 return (elemTop <= docViewBottom);
                 //return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
@@ -146,8 +147,9 @@
                 });
 
                 xhr.done($.proxy(function (data) {
-                    var dataset = data.payload;
-
+                    var dataset = data.Data;
+                    if (this.options.filter.skip === 0)
+                        this.options.filter.total(data.Total);
                     for (var i = 0; i < dataset.length; i++)
                         this.options.data.push(dataset[i]);
 
@@ -163,8 +165,12 @@
         defaultFilter: {
             take: 0,
             skip: 0,
+            total: ko.observable(0),
             sortby: ko.observable(),
             sortdirection: ko.observable(sortDirections[0]),
+            setSkip: function (skip) {
+                this.skip = skip;
+            },
             toJSON: function () {
                 return { skip: this.skip, take: this.take, sortby: this.sortby(), sortdirection: this.sortdirection() };
             }
