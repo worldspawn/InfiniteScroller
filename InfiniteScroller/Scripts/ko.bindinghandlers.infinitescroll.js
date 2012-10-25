@@ -1,5 +1,22 @@
 ﻿(function () {
     var sortDirections = ['ascending', 'descending'];
+    
+    ko.bindingHandlers.fixedtableheader = {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var $element = $(element);
+            var $maintable = $element.parents('table');
+            var $tableclone = $element.parents('table').clone();
+            $tableclone.css('width', $maintable.width());
+            $tableclone.addClass('detachedheader');
+            $tableclone.find(' > :not(thead)').remove();
+            $tableclone.removeAttr('data-bind');
+            $tableclone.find('thead').removeAttr('data-bind');
+            $element.parents('.scrollcontainer').prepend($tableclone);
+
+            ko.applyBindings(viewModel, $tableclone[0]);
+        }
+    }
+
     ko.bindingHandlers.column = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var options = valueAccessor();
@@ -51,6 +68,7 @@
             self.label = options.label;
             self.sortable = false;
             self.currentsort = ko.observable(null);
+            self.cellbindings = options.cellbindings;
 
             if (!options.sortable || !options.sortkey || !options.filter)
                 return;
