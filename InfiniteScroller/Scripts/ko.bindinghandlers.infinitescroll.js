@@ -145,6 +145,7 @@
                 var thresholdrow = $(rows[rows.length - this.options.thresholdindex]);
 
                 if (this.isinview(thresholdrow)) {
+                    console.log('loadnext');
                     this.loadnext();
                 }
             };
@@ -153,11 +154,12 @@
                 var thresholdrow, position, rows;
                
                 if (lastskip < targetindex) {
-                    take = targetindex - lastskip;
+                    take = 100 + targetindex - lastskip;
                     this.options.filter.take = take;
                     this.loadnext($.proxy(function () {
                         rows = this.$element.find('tbody tr');
                         thresholdrow = $(rows[targetindex]);
+                        
                         position = thresholdrow.position();
                         this.container.animate({
                             scrollTop: this.container.scrollTop() + position.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
@@ -168,7 +170,7 @@
                     rows = this.$element.find('tbody tr');
                     thresholdrow = $(rows[targetindex]);
                     position = thresholdrow.position();
-                    console.log(thresholdrow, position.top)
+                    
                     this.container.animate({
                         scrollTop: this.container.scrollTop() + position.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
                     });
@@ -179,12 +181,10 @@
 
                 var docViewTop = $container.scrollTop();
                 var docViewBottom = docViewTop + $container.height();
-
                 var elemTop = $element.offset().top;
-                //var elemBottom = elemTop + $element.height();
-
-                return (elemTop <= docViewBottom);
-                //return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
+                var elemBottom = elemTop + $element.height();
+                                
+                return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
             };
             this.loadnext = function (done) {
                 this.lastSkip = this.options.filter.skip;
