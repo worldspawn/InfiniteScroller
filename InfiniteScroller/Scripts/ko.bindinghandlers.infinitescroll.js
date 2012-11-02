@@ -134,7 +134,11 @@
                     this.jumpto(index);
                 }, this));
             },
+            this.processing = false;
             this.onscroll = function () {
+                if (this.processing)
+                    return;
+                this.processing = true;
                 var lastskip = this.lastSkip;
                 var loadeditems = this.options.data().length;
 
@@ -145,11 +149,18 @@
                 var thresholdrow = $(rows[rows.length - this.options.thresholdindex]);
 
                 if (this.isinview(thresholdrow)) {
-                    console.log('loadnext');
-                    this.loadnext();
+                    this.loadnext($.proxy(function () {
+                        this.processing = false;
+                    }, this));
+                }
+                else {
+                    this.processing = false;
                 }
             };
             this.jumpto = function (targetindex) {
+                if (this.processing)
+                    return;
+                this.processing = true;
                 var lastskip = this.lastSkip;
                 var thresholdrow, position, rows;
                
@@ -159,18 +170,18 @@
                     this.loadnext($.proxy(function () {
                         rows = this.$element.find('tbody tr');
                         thresholdrow = $(rows[targetindex]);
-                        
+
                         position = thresholdrow.position();
                         this.container.animate({
                             scrollTop: this.container.scrollTop() + position.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
-                        });
+                        }, { complete: $.proxy(function () { this.processing = false; }, this) });
                     }, this));
                 }
                 else {
                     rows = this.$element.find('tbody tr');
                     thresholdrow = $(rows[targetindex]);
                     position = thresholdrow.position();
-                    
+
                     this.container.animate({
                         scrollTop: this.container.scrollTop() + position.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
                     });
@@ -183,8 +194,9 @@
                 var docViewBottom = docViewTop + $container.height();
                 var elemTop = $element.offset().top;
                 var elemBottom = elemTop + $element.height();
-                                
-                return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
+
+                return elemTop <= docViewBottom;
+                //return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
             };
             this.loadnext = function (done) {
                 this.lastSkip = this.options.filter.skip;
