@@ -1,11 +1,11 @@
 ﻿(function () {
     var sortDirections = ['ascending', 'descending'];
-    
+
     ko.bindingHandlers.fixedtableheader = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var $element = $(element);
             var $maintable = $element.parents('table');
-            var $tableclone = $element.parents('table').clone();
+            var $tableclone = $maintable.clone();
             $tableclone.css('width', $maintable.width());
             $tableclone.addClass('detachedheader');
             $tableclone.find(' > :not(thead)').remove();
@@ -15,12 +15,12 @@
 
             ko.applyBindings(viewModel, $tableclone[0]);
         }
-    }
+    };
 
     ko.bindingHandlers.column = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var options = valueAccessor();
-            
+
             var $element = $(element);
             var $columncontainer = $('<div/>');
             var $label = $('<span/>').html(options.label);
@@ -33,7 +33,7 @@
                 $('<i/>').addClass('icon-chevron-down').appendTo($columncontainer);
             }
         }
-    }
+    };
 
     ko.bindingHandlers.infinitescroll = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
@@ -60,7 +60,7 @@
 
             var $element = $(element);
             var manager = new ko.bindingHandlers.infinitescroll.ScrollManager();
-            manager.init(options, $element);
+            manager.init(options, $element, viewModel);
         },
         Column: function (options) {
             var self = this;
@@ -72,7 +72,7 @@
 
             if (!options.sortable || !options.sortkey || !options.filter)
                 return;
-            
+
             self.sortable = options.sortable;
             self.sortkey = options.sortkey;
             self.currentsort(options.filter.sortby() === self.sortkey);
@@ -86,11 +86,11 @@
             self[sortDirections[1]] = ko.computed(function () {
                 return self.sortdirection() === sortDirections[1];
             });
-            
+
             if (self.sortable)
                 self.click = function () {
                     if (!self.sortable)
-                        return;                
+                        return;
                     options.filter.setSkip(0);
 
                     if (self.currentsort()) {
@@ -108,8 +108,9 @@
                 };
         },
         ScrollManager: function () {
-            this.init = function (options, $element) {
+            this.init = function (options, $element, viewModel) {
                 this.lastSkip = 0;
+                this.originalTake = options.filter.take;
 
                 var subscriber = ko.computed($.proxy(options.filter.toJSON, options.filter));
                 subscriber.extend({ throttle: options.throttle });
@@ -123,6 +124,9 @@
 
                 this.options = options;
                 this.$element = $element;
+                this.container.bind('jumpto', $.proxy(function (ev, index) {
+                    this.jumpto(index);
+                }, this));
             },
             this.onscroll = function () {
                 var lastskip = this.lastSkip;
@@ -138,9 +142,26 @@
                     this.loadnext();
                 }
             };
+            this.jumpto = function (targetindex) {
+                var lastskip = this.lastSkip;
+
+                if (lastskip < targetindex) {
+                    take = targetindex - lastskip;
+                    this.options.filter.take = take;
+
+                    this.loadnext($.proxy(function () {
+                        var rows = this.$element.find('tbody tr');
+                        var thresholdrow = $(rows[targetindex]);
+                        var offset = thresholdrow.offset();
+                        this.container.animate({
+                            scrollTop: offset.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
+                        });
+                    }, this));
+                }
+            };
             this.isinview = function ($element) {
                 var $container = this.options.container;
-                
+
                 var docViewTop = $container.scrollTop();
                 var docViewBottom = docViewTop + $container.height();
 
@@ -150,7 +171,7 @@
                 return (elemTop <= docViewBottom);
                 //return ((elemBottom >= docViewTop) && (elemTop <= docViewBottom));
             };
-            this.loadnext = function () {
+            this.loadnext = function (done) {
                 this.lastSkip = this.options.filter.skip;
                 if (this.options.filter.skip === 0)
                     this.options.data.removeAll();
@@ -172,6 +193,9 @@
                         this.options.data.push(dataset[i]);
 
                     this.options.filter.skip += dataset.length;
+                    this.options.filter.take = this.originalTake;
+                    if (done)
+                        xhr.done(done);
                 }, this));
             };
         },

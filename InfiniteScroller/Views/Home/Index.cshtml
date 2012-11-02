@@ -56,6 +56,10 @@
         left : 0;
         background-color : white;
     }
+    
+    .jumpto {
+        cursor: pointer;
+    }
 </style>
 
 <h1>Infinite Scrollums</h1>
@@ -84,7 +88,7 @@
             Total: <span data-bind="html : scrollermodel.filter.total"></span>
             [
             <!-- ko foreach : ko.computed(function(){ var x = []; x.length = 4; return x }) -->
-            <span data-bind="html : (1 + $index()) * ($parent.scrollermodel.filter.total() / 5)"></span>
+            <span class="jumpto" data-bind="html : (1 + $index()) * ($parent.scrollermodel.filter.total() / 5), click : function(data, ev) { $(ev.currentTarget).parents('.scrollcontainer').find('.scrollwindow').trigger('jumpto', ((1 + $index()) * ($parent.scrollermodel.filter.total() / 5)) -1) }"></span>
             <!-- /ko -->
             ]
         </div>
