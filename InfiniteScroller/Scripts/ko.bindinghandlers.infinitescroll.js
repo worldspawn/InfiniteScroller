@@ -34,6 +34,12 @@
             }
         }
     };
+    
+    ko.bindingHandlers.statusbar = {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
+            
+        }
+    }
 
     ko.bindingHandlers.infinitescroll = {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
@@ -144,19 +150,28 @@
             };
             this.jumpto = function (targetindex) {
                 var lastskip = this.lastSkip;
-
+                var thresholdrow, position, rows;
+               
                 if (lastskip < targetindex) {
                     take = targetindex - lastskip;
                     this.options.filter.take = take;
-
                     this.loadnext($.proxy(function () {
-                        var rows = this.$element.find('tbody tr');
-                        var thresholdrow = $(rows[targetindex]);
-                        var offset = thresholdrow.offset();
+                        rows = this.$element.find('tbody tr');
+                        thresholdrow = $(rows[targetindex]);
+                        position = thresholdrow.position();
                         this.container.animate({
-                            scrollTop: offset.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
+                            scrollTop: this.container.scrollTop() + position.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
                         });
                     }, this));
+                }
+                else {
+                    rows = this.$element.find('tbody tr');
+                    thresholdrow = $(rows[targetindex]);
+                    position = thresholdrow.position();
+                    console.log(thresholdrow, position.top)
+                    this.container.animate({
+                        scrollTop: this.container.scrollTop() + position.top - this.$element.find('thead').outerHeight() - thresholdrow.outerHeight()
+                    });
                 }
             };
             this.isinview = function ($element) {

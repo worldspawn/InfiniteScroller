@@ -75,9 +75,9 @@
                 </thead>
                 <tbody data-bind="foreach : data">
                     <tr>
-                        <td><a data-bind="html : $index, attr : { name : 'index_' + $index() }"></a></td>
+                        <td data-bind="html : $index"></td>
                         <td data-bind="html : Name"></td>
-                        <td data-bind="html : Group"></td>            
+                        <td data-bind="html : Group"></td>
                     </tr>
                 </tbody>
             </table>
@@ -104,9 +104,9 @@
         this.filter.sortby('Name');
         this.container = $('.scrollwindow');
         this.columns = [
-            new ko.bindingHandlers.infinitescroll.Column({ label : 'Index', sortable : false, cellbindings : { html : '$index' } }),
-            new ko.bindingHandlers.infinitescroll.Column({ label : 'Column A', sortable : true, sortkey : 'Name', filter : this.filter, cellbindings : { html : 'Name' } }),
-            new ko.bindingHandlers.infinitescroll.Column({ label : 'Column B', sortable : false, cellbindings : { html : 'Group'} })
+            new ko.bindingHandlers.infinitescroll.Column({ label : 'Index', sortable : false }),
+            new ko.bindingHandlers.infinitescroll.Column({ label : 'Column A', sortable : true, sortkey : 'Name', filter : this.filter }),
+            new ko.bindingHandlers.infinitescroll.Column({ label : 'Column B', sortable : false })
         ];
 
         this.throttle = 600;
